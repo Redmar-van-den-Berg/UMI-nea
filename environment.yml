@@ -1,0 +1,11 @@
+# This file may be used to create an environment using:
+# $ conda env create -f environment.yml
+# platform: linux-64
+name: deng2025
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - numpy
+  - scikit-bio=0.6.3
