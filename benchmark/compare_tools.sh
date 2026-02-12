@@ -191,6 +191,13 @@ run_humid() {
       # Run HUMID
       echo "$name r=$rep t=$td humid" >> humid.time
       { time timeout ${time_lim} bash -c "humid -n ${umi_len} -m ${dist} -e -a -d humid ${fastq} 2> ${log}"; } 2>> humid.time
+
+      # Create the labels
+      annotated=humid/sim${rep}_annotated.fastq
+      grep "^@" ${annotated} | awk -F '_' '{print $2}' | tr ':' ' ' > ${labels}
+
+      # Determine the clusters
+      get_clustering_score ${labels} sim${rep}.truth.labels humid.sim${rep}.t$td.score
   fi
 }
 
