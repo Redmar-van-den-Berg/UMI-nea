@@ -27,5 +27,8 @@ COPY UMIC-seq.py UMIC-seq/
 RUN git clone -b v0.3.4 https://github.com/vpc-ccg/calib.git calib
 RUN cd calib && make
 
+RUN wget https://github.com/jfjlaros/HUMID/releases/download/v1.0.4/humid -O /usr/local/bin/humid
+RUN chmod +x /usr/local/bin/humid
+
 WORKDIR /home/
 CMD ["/bin/bash"]
