@@ -165,6 +165,35 @@ run_calib() {
     fi
 }
 
+run_humid() {
+  rep=$1
+  td=$2
+  mkdir -p humid
+
+  labels=humid/sim${rep}.t$td.labels
+  fastq=humid/sim${rep}.fastq
+  log=log/humid.sim${rep}.t$td.log
+
+  if [ ! -f $labels ]; then
+      # Write fastq with with empty reads, UMI in header
+      if [ ! -f $fastq ]; then
+        cat sim${rep}.out | cut -f 1 |  awk '{print "@read"NR"_"$1"\n\n+\n"}' > ${fastq}
+        touch ${fastq}
+      fi
+
+      # Determine the edit distance
+      if [ -f log/UMI-nea.sim${rep}.*.log ]; then
+        dist=`cat log/UMI-nea.sim${rep}.*.log | grep "maxdist" | head -1 | awk '{print $NF}'`
+      else
+        dist=2
+      fi
+
+      # Run HUMID
+      echo "$name r=$rep t=$td humid" >> humid.time
+      { time timeout ${time_lim} bash -c "humid -n ${umi_len} -m ${dist} -e -a -d humid ${fastq} 2> ${log}"; } 2>> humid.time
+  fi
+}
+
 if [ ! -f performance.txt ]; then
     echo "num_founder mean_children_num variance_children_num umi_len err_rate insertion-deletion-substitution replicate total_umi simulated_mean_children_num simulated_variance_children_num substitution_base indel_base simulated_insertion-deletion-substitution substitution_only_umi indel_umi uniq_umi tool clustering_threshold thread runtime_in_sec dedup_umi_cluster V-measure homogeneity_score completeness_score RPU_cutoff RPU_cutoff_model estimated_molecule" > performance.txt
 fi
@@ -190,7 +219,7 @@ for rep in `seq 1 $num_rep`; do
 : <<'END'
 END
     for eval_t in `echo $tools_to_run | sed 's/,/\n/g'`; do
-        if [ $eval_t == "umi-tools" ]; then
+        if [ $eval_t == "umi-tools" ] || [ $eval_t == "humid" ]; then
             td=1
         else
             td=$thread
