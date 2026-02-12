@@ -190,7 +190,12 @@ run_humid() {
 
       # Run HUMID
       echo "$name r=$rep t=$td humid" >> humid.time
-      { time timeout ${time_lim} bash -c "humid -n ${umi_len} -m ${dist} -e -a -d humid ${fastq} 2> ${log}"; } 2>> humid.time
+      { time timeout ${time_lim} bash -c "humid -n ${umi_len} -m ${dist} -e -s -a -d humid ${fastq} 2> ${log}"; } 2>> humid.time
+
+      # Rename the stat files
+      for stat in neigh counts clusters stats; do
+        mv humid/${stat}.dat humid/${stat}${rep}.dat
+      done
 
       echo "Edit distance: ${dist}" >> ${log}
       # Create the labels
