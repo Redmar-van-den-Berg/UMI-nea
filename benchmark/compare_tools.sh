@@ -192,6 +192,7 @@ run_humid() {
       echo "$name r=$rep t=$td humid" >> humid.time
       { time timeout ${time_lim} bash -c "humid -n ${umi_len} -m ${dist} -e -a -d humid ${fastq} 2> ${log}"; } 2>> humid.time
 
+      echo "Edit distance: ${dist}" >> ${log}
       # Create the labels
       annotated=humid/sim${rep}_annotated.fastq
       grep "^@" ${annotated} | awk -F '_' '{print $2}' | tr ':' ' ' > ${labels}
@@ -262,6 +263,10 @@ END
             rpu_cutoff=`cat $eval_t/sim${rep}.t$td.clustered.estimate | grep "rpu_cutoff" | awk '{print $NF}'`
             rpu_model=`cat $eval_t/sim${rep}.t$td.clustered.estimate | head -1 | awk '{print ($1~/NB/?"negbinom":"kneeplot")}'`
             est_mol=`cat $eval_t/sim${rep}.t$td.clustered.estimate | grep "estimated_molecules" | awk '{print $NF}'`
+            ;;
+        humid)
+            runtime_t=`cat $eval_t.time | grep -A 2 "$name r=$rep t=$td" | tail -1 | awk '{split($NF,a,"m");n+=a[1]*60;split(a[2],b,"s");n+=b[1];printf "%.2f\n",n}'`
+            maxdist=`cat log/$eval_t.sim${rep}.t$td.log | grep "Edit distance" | awk '{print $3}'`
             ;;
         *)
             echo "invalid tool"
