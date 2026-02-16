@@ -170,41 +170,46 @@ run_humid() {
   td=$2
   mkdir -p humid
 
+  echo "RUNNING HUMID: $rep $td"
   labels=humid/sim${rep}.t$td.labels
   fastq=humid/sim${rep}.fastq
   log=log/humid.sim${rep}.t$td.log
 
   if [ ! -f $labels ]; then
-      # Write fastq with with empty reads, UMI in header
-      if [ ! -f $fastq ]; then
-        cat sim${rep}.out | cut -f 1 |  awk '{print "@read"NR"_"$1"\n\n+\n"}' > ${fastq}
-        touch ${fastq}
-      fi
+    # Write fastq with with empty reads, UMI in header
+    if [ ! -f $fastq ]; then
+      cat sim${rep}.out | cut -f 1 |  awk '{print "@read"NR"_"$1"\n\n+\n"}' > ${fastq}
+    fi
 
-      # Determine the edit distance
-      if [ -f log/UMI-nea.sim${rep}.*.log ]; then
-        dist=`cat log/UMI-nea.sim${rep}.*.log | grep "maxdist" | head -1 | awk '{print $NF}'`
-      else
-        dist=2
-      fi
+    # Determine the edit distance
+    if [ -f log/UMI-nea.sim${rep}.*.log ]; then
+      dist=`cat log/UMI-nea.sim${rep}.*.log | grep "maxdist" | head -1 | awk '{print $NF}'`
+    else
+      dist=1
+    fi
 
-      # Run HUMID
-      echo "$name r=$rep t=$td humid" >> humid.time
-      { time timeout ${time_lim} bash -c "humid -n ${umi_len} -m ${dist} -e -s -a -d humid ${fastq} 2> ${log}"; } 2>> humid.time
+    # Run HUMID
+    echo "$name r=$rep t=$td humid" >> humid.time
+    echo "humid -n ${umi_len} -m ${dist} -e -s -a -d humid ${fastq} 2> ${log}"
+    { time timeout ${time_lim} bash -c "humid -n ${umi_len} -m ${dist} -e -s -a -d humid ${fastq} 2> ${log}"; } 2>> humid.time
 
-      # Rename the stat files
-      for stat in neigh counts clusters stats; do
-        mv humid/${stat}.dat humid/${stat}${rep}.dat
-      done
+    # Rename the stat files
+    for stat in neigh counts clusters stats; do
+      mv humid/${stat}.dat humid/${stat}${rep}.dat
+    done
 
-      echo "Edit distance: ${dist}" >> ${log}
-      # Create the labels
-      annotated=humid/sim${rep}_annotated.fastq
-      grep "^@" ${annotated} | awk -F '_' '{print $2}' | tr ':' ' ' > ${labels}
-
-      # Determine the clusters
-      get_clustering_score ${labels} sim${rep}.truth.labels humid.sim${rep}.t$td.score
+    pwd
+    echo "Edit distance: ${dist}" >> ${log}
+    # Create the labels
+    annotated=humid/sim${rep}_annotated.fastq
+    echo "annotated=${annotated}"
+    du -sh ${annotated}
+    echo "grep '^@' ${annotated} | awk -F '_' '{print $2}' | tr ':' ' ' > ${labels}"
+    grep '^@' ${annotated} | awk -F '_' '{print $2}' | tr ':' ' ' > ${labels}
   fi
+
+  # Determine the clusters
+  get_clustering_score ${labels} sim${rep}.truth.labels humid.sim${rep}.t$td.score
 }
 
 if [ ! -f performance.txt ]; then
