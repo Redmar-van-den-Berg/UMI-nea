@@ -14,7 +14,8 @@ def main(input, distance_threshold):
 
             if umi not in nodes:
                 nodes[umi] = 1
-                mutations.append((founder, error, umi))
+                if error:
+                    mutations.append((founder, error, umi))
             else:
                 nodes[umi]+=1
 
@@ -26,7 +27,7 @@ def main(input, distance_threshold):
         for umi1, umi2 in itertools.combinations(nodes.keys(), 2):
             dist = editdistance.eval(umi1, umi2)
 
-            if dist <= distance_threshold:
+            if dist and dist <= distance_threshold:
                 distances.append((umi1, dist, umi2))
     else:
         distances = list()
