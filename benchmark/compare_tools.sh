@@ -1,3 +1,10 @@
+#!/usr/bin/env bash
+
+set -e
+set -u
+set -o pipefail
+set -x
+
 umi_len=$1 # umi length
 err_rate=$2 # error rate
 pN=$3 # number of founder
@@ -36,6 +43,8 @@ get_clustering_score() {
         python $code_dir/clustering_score.py $2 $1 > $3
     else
         echo "$1 homogeneity_score is 0 completeness_score is 0 V is 0" > $3
+        echo "WARNING: unequal number of lines in label file, removing $1"
+        exit
         rm -f $1
     fi
 }
@@ -170,15 +179,17 @@ run_humid() {
   td=$2
   mkdir -p humid
 
-  echo "RUNNING HUMID: $rep $td"
   labels=humid/sim${rep}.t$td.labels
   fastq=humid/sim${rep}.fastq
   log=log/humid.sim${rep}.t$td.log
 
   if [ ! -f $labels ]; then
-    # Write fastq with with empty reads, UMI in header
+    # Write fastq with UMI in header, add read with 8 A's
+    # This prevents loss of reads where there are deletions in the UMI, which
+    # would otherwise be dropped by HUMID since it requires the specified
+    # number of bases to exist
     if [ ! -f $fastq ]; then
-      cat sim${rep}.out | cut -f 1 |  awk '{print "@read"NR"_"$1"\n\n+\n"}' > ${fastq}
+      cat sim${rep}.out | cut -f 1 |  awk '{print "@read"NR"_"$1"\nAAAAAAAA\n+\n????????"}' > ${fastq}
     fi
 
     # Determine the edit distance
@@ -190,7 +201,6 @@ run_humid() {
 
     # Run HUMID
     echo "$name r=$rep t=$td humid" >> humid.time
-    echo "humid -n ${umi_len} -m ${dist} -e -s -a -d humid ${fastq} 2> ${log}"
     { time timeout ${time_lim} bash -c "humid -n ${umi_len} -m ${dist} -e -s -a -d humid ${fastq} 2> ${log}"; } 2>> humid.time
 
     # Rename the stat files
@@ -198,13 +208,10 @@ run_humid() {
       mv humid/${stat}.dat humid/${stat}${rep}.dat
     done
 
-    pwd
     echo "Edit distance: ${dist}" >> ${log}
+
     # Create the labels
     annotated=humid/sim${rep}_annotated.fastq
-    echo "annotated=${annotated}"
-    du -sh ${annotated}
-    echo "grep '^@' ${annotated} | awk -F '_' '{print $2}' | tr ':' ' ' > ${labels}"
     grep '^@' ${annotated} | awk -F '_' '{print $2}' | tr ':' ' ' > ${labels}
   fi
 
