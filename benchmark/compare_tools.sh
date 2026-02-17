@@ -2,8 +2,8 @@
 
 set -e
 set -u
-set -o pipefail
-set -x
+# set -o pipefail
+# set -x
 
 umi_len=$1 # umi length
 err_rate=$2 # error rate
