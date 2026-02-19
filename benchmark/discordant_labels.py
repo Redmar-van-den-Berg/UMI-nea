@@ -1,33 +1,21 @@
 #!/usr/bin/env python
 
 import sys
+from collections import defaultdict
 
 truth_file = sys.argv[1]
 classificiation_file = sys.argv[2]
 
 
 def read_labels(fname):
-    groups = list()
     with open(fname) as fin:
-        umis = set()
-        umi, prev_label = next(fin).strip("\n").split(" ")
-        umis.add(umi)
+        umis = defaultdict(set)
         for line in fin:
             umi, label =  line.strip("\n").split(" ")
-
-            if label == prev_label:
-                umis.add(umi)
-            else:
-                print(f"Adding label {prev_label}: {umis}")
-                groups.append(umis)
-
-                umis=set()
-                umis.add(umi)
-                prev_label = label
-        else:
-            print(f"Adding label {prev_label}: {umis}")
-            groups.append(umis)
-    return groups
+            umis[label].add(umi)
+    for key, value in umis.items():
+        print(key, value)
+    return list(umis.values())
 
 
 def print_discordant(truth, classification):
