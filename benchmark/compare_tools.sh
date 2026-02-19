@@ -266,6 +266,54 @@ run_humid-fixed() {
   # Determine the clusters
   get_clustering_score ${labels} ${rw_truth} humid-fixed.sim${rep}.t$td.score
 }
+run_humid-fixed-max() {
+  rep=$1
+  td=$2
+  mkdir -p humid-fixed-max
+
+  labels=humid-fixed-max/sim${rep}.t$td.labels
+  fastq=humid-fixed-max/sim${rep}.fastq
+  log=log/humid-fixed-max.sim${rep}.t$td.log
+
+  if [ ! -f $labels ]; then
+    # Write fastq with UMI in header, ensuring that the UMI is always of length umi_len
+    if [ ! -f $fastq ]; then
+      python3 ../benchmark/sim_to_fastq.py sim${rep}.out ${umi_len} > ${fastq}
+    fi
+
+    # Determine the edit distance
+    if [ -f log/UMI-nea.sim${rep}.*.log ]; then
+      dist=`cat log/UMI-nea.sim${rep}.*.log | grep "maxdist" | head -1 | awk '{print $NF}'`
+    else
+      dist=1
+    fi
+
+    # Run HUMID
+    echo "$name r=$rep t=$td humid-fixed-max" >> humid-fixed-max.time
+    ## Note the -x, for the maximum instead of the directional clustering method
+    { time timeout ${time_lim} bash -c "humid -n ${umi_len} -m ${dist} -e -s -a -x -d humid-fixed-max ${fastq} 2> ${log}"; } 2>> humid-fixed-max.time
+
+    # Rename the stat files
+    for stat in neigh counts clusters stats; do
+      mv humid-fixed-max/${stat}.dat humid-fixed-max/${stat}${rep}.dat
+    done
+
+    echo "Edit distance: ${dist}" >> ${log}
+
+    # Create the labels
+    annotated=humid-fixed-max/sim${rep}_annotated.fastq
+    grep '^@' ${annotated} | awk -F '_' '{print $2}' | tr ':' ' ' | sort > ${labels}
+
+    # Rewrite the original labels file to fix the umi length
+    truth=sim${rep}.truth.labels
+    rw_truth=sim${rep}.truth.rewrite.labels
+    python3 ../benchmark/rewrite_truth.py ${truth} ${umi_len} > ${rw_truth}
+  fi
+
+
+  # Determine the clusters
+  get_clustering_score ${labels} ${rw_truth} humid-fixed-max.sim${rep}.t$td.score
+}
 if [ ! -f performance.txt ]; then
     echo "num_founder mean_children_num variance_children_num umi_len err_rate insertion-deletion-substitution replicate total_umi simulated_mean_children_num simulated_variance_children_num substitution_base indel_base simulated_insertion-deletion-substitution substitution_only_umi indel_umi uniq_umi tool clustering_threshold thread runtime_in_sec dedup_umi_cluster V-measure homogeneity_score completeness_score RPU_cutoff RPU_cutoff_model estimated_molecule" > performance.txt
 fi
@@ -291,7 +339,7 @@ for rep in `seq 1 $num_rep`; do
 : <<'END'
 END
     for eval_t in `echo $tools_to_run | sed 's/,/\n/g'`; do
-        if [ $eval_t == "umi-tools" ] || [ $eval_t == "humid" ] || [ $eval_t == "humid-fixed" ]; then
+        if [ $eval_t == "umi-tools" ] || [ $eval_t == "humid" ] || [ $eval_t == "humid-fixed" ] || [ $eval_t == "humid-fixed-max" ]; then
             td=1
         else
             td=$thread
@@ -333,6 +381,10 @@ END
             maxdist=`cat log/$eval_t.sim${rep}.t$td.log | grep "Edit distance" | awk '{print $3}'`
             ;;
         humid-fixed)
+            runtime_t=`cat $eval_t.time | grep -A 2 "$name r=$rep t=$td" | tail -1 | awk '{split($NF,a,"m");n+=a[1]*60;split(a[2],b,"s");n+=b[1];printf "%.2f\n",n}'`
+            maxdist=`cat log/$eval_t.sim${rep}.t$td.log | grep "Edit distance" | awk '{print $3}'`
+            ;;
+        humid-fixed-max)
             runtime_t=`cat $eval_t.time | grep -A 2 "$name r=$rep t=$td" | tail -1 | awk '{split($NF,a,"m");n+=a[1]*60;split(a[2],b,"s");n+=b[1];printf "%.2f\n",n}'`
             maxdist=`cat log/$eval_t.sim${rep}.t$td.log | grep "Edit distance" | awk '{print $3}'`
             ;;
