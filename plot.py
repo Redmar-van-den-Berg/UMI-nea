@@ -81,7 +81,7 @@ def _(alt, filtered):
         # The bars
         bars=alt.Chart(df).mark_bar().encode(
             x='tool',
-            y=alt.Y(f'mean({column}):Q').title(f'Mean {column}').scale(type="log" if log else ""),
+            y=alt.Y(f'mean({column}):Q').title(f'Mean {column}').scale(type="log" if log else "", domain =[0.9,1]),
             color=alt.Color("tool")
     
         )
@@ -92,8 +92,8 @@ def _(alt, filtered):
         )
         return alt.layer(bars,error_bars, data=df)
 
-    barchart(filtered, "V-measure", log=True)
-    barchart(filtered, "runtime_in_sec")
+    barchart(filtered, "V-measure")
+    #barchart(filtered, "runtime_in_sec")
     return
 
 
