@@ -73,7 +73,7 @@ function performance() {
       # Check that this replicate is present in the time file
       
       set +e
-      grep "$name r=$rep t=$td" ${time}
+      grep "$name r=$rep t=$td" ${time} > /dev/null
       exit_code=$?
       set -e
 
@@ -127,6 +127,7 @@ function performance() {
       *)
           echo "invalid tool"
       esac
+
       echo "$pN $oN $var_oN $umi_len $err_rate $mut_ratio $rep $total_umi $s_mu $s_var $bp_sub $bp_idl $bp_ratio $umi_sub $umi_idl $uniq_umi $eval_t $maxdist $td $runtime_t $n_cluster $score_v $score_h $score_c $rpu_cutoff $rpu_model $est_mol"
     done
   done
@@ -144,6 +145,7 @@ function performance() {
 # err_rate=0.01
 # mutation_ratio=1-1-1
 # tools_to_compare=humid-fixed-max
+# tools_to_compare=UMI-nea
 #
 # performance
 #
