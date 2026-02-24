@@ -21,8 +21,17 @@ def _():
 
 
 @app.cell
-def _(pd):
-    df = pd.read_csv("perf", sep=" ")
+def _(mo):
+    f_browser=mo.ui.file_browser(multiple=False)
+    f_browser
+    return (f_browser,)
+
+
+@app.cell
+def _(f_browser, pd):
+    fname=f_browser.path(index=0)
+    fname=fname if fname else "perf"
+    df = pd.read_csv(fname, sep=" ")
     # Add CPU time
     df["cputime_in_sec"] = df["runtime_in_sec"] * df["thread"]
     # Remove NaN columns
