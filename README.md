@@ -1,5 +1,5 @@
 > [!IMPORTANT]
-> This repository was used to benchmark HUMID against UMI-nea. Please report any issues with UMI-nea itself at the [official UMI-nea repository](https://github.com/Qiaseq-research/UMI-nea)
+> This repository was used to benchmark HUMID against UMI-nea. Please report any issues with UMI-nea itself at the [official UMI-nea repository](https://github.com/Qiaseq-research/UMI-nea).
 >
 > The docker container with HUMID v1.0.5 which was used in the benchmark can be found [here](https://hub.docker.com/r/redmarvandenberg/umi-nea-humid/tags).
 
