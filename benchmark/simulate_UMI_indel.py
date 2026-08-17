@@ -1,6 +1,6 @@
 import sys
 import re
-from random import randint, random, shuffle
+from random import randint, random, shuffle, seed
 import numpy as np
 from skbio.alignment import StripedSmithWaterman
 from multiprocessing import Pool
@@ -69,12 +69,13 @@ def sim_UMI(simf, umi_len, err_rate, par_N, off_N, do_indel, mut_ratio, dsp):
     f1 = open(simf+".truth.labels", "w")
     print("\nWorking %s" % name)
     # generate unique random UMI sequences
-    parents_1 = set()
+    parents = list()
     for i in range(int(par_N*2)):
-        parents_1.add(sample_umi(umi_len))
-        if len(parents_1) >= par_N:
+        new_parent=sample_umi(umi_len)
+        if new_parent not in parents:
+            parents.append(new_parent)
+        if len(parents) >= par_N:
             break
-    parents = list(parents_1)
     # generate children/founder
     reads, reads_err, read_parent_id, read_parent_label = [], [], [], []
     num_sig = 0
@@ -123,4 +124,9 @@ do_indel = bool(int(sys.argv[6]))
 mut_ratio = [int(x) for x in sys.argv[7].split("-")]
 dsp = float(sys.argv[8])
 #generate_Mut("A", do_indel, mut_ratio)
+
+# Set the seed for the random number generator
+seed_int = int(sys.argv[9])
+seed(seed_int)
+np.random.seed(seed_int)
 sim_UMI(simf, umi_len, err_rate, par_N, off_N, do_indel, mut_ratio, dsp)
