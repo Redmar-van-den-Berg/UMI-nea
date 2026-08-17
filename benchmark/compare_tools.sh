@@ -17,10 +17,9 @@ umic_threshold=$9 # threhold number for UMIC-seq clustering; set to 0 for auto f
 thread=${10} # number of thread
 p1_ratio=${11} # var/mean ratio for number of children simulation with negative bionmial distribution
 tools_to_run=${12} # tools to run UMI-nea,umi-tools,UMIC-seq,calib
-seed=${13} # Random seed for simulated data
 code=$(readlink -f $0)
 code_dir=`dirname $code`
-name=sim_${pN}_${oN}_ul${umi_len}_err${err_rate}_seed${seed}
+name=sim_${pN}_${oN}_ul${umi_len}_err${err_rate}
 time_lim=86400s # time limit for each tools
 
 echo -e "simulation\numi_len=$umi_len\nerr_rate=$err_rate\nnum_founder=$pN\nnum_children=$oN\nnum_replicate=$num_rep\ndo_indel=$do_indel\nratio=$mut_ratio\n UMI-nea&umi-tools_threshold=$dist\nUMIC-seq_threshold=$umic_threshold\n num_thread=$thread\nvar/mean_ratio=$p1_ratio\nevaluate_tools=$tools_to_run"
@@ -33,7 +32,8 @@ aln="0,chr1,1000001,60,150M,*,0,0,GTGGAGCGCGCCGCCACGGACCACGGGCGGGCTGGCGGGCGAGCGG
 
 simulate_umi() {
     rep=$1
-    python $code_dir/simulate_UMI_indel.py sim${rep} $umi_len $err_rate $pN $oN $do_indel $mut_ratio $p1_ratio $seed > log/simulate.sim${rep}.log
+    random_seed=$1
+    python $code_dir/simulate_UMI_indel.py sim${rep} $umi_len $err_rate $pN $oN $do_indel $mut_ratio $p1_ratio $random_seed > log/simulate.sim${rep}.log
     cat sim${rep}.truth.labels | sort -k1,1 -k2,2n > sim.l && mv sim.l sim${rep}.truth.labels
 }
 

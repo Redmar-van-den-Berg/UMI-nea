@@ -129,4 +129,6 @@ dsp = float(sys.argv[8])
 seed_int = int(sys.argv[9])
 seed(seed_int)
 np.random.seed(seed_int)
+
+print("Random seed is ", seed_int)
 sim_UMI(simf, umi_len, err_rate, par_N, off_N, do_indel, mut_ratio, dsp)
