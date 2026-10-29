@@ -5,6 +5,7 @@ ARG HUMID_VERSION=v1.0.5
 ARG CALIB_VERSION=v0.3.4
 ARG UMI_NEA_VERSION=v1.0.2
 ARG PARDRE_VERSION=v2.3.5-2
+ARG FASTQ_DUPAWAY_VERSION=1.5.1
 
 RUN apt-get -y update && \
     apt-get -y install apt-utils sudo wget curl git vim bc less \
@@ -40,6 +41,9 @@ RUN chmod +x /usr/local/bin/humid
 WORKDIR /Download/
 RUN git clone -b $PARDRE_VERSION https://github.com/Redmar-van-den-Berg/ParDRe.git ParDRe
 RUN cd ParDRe && make && mv ParDRe /usr/local/bin/
+
+RUN git clone -b $FASTQ_DUPAWAY_VERSION https://github.com/AndrewSigorskih/fastq-dupaway.git fastq-dupaway
+RUN cd fastq-dupaway && make && mv fastq-dupaway /usr/local/bin
 
 WORKDIR /home/
 CMD ["/bin/bash"]
