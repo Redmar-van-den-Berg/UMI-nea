@@ -4,13 +4,15 @@ FROM python:3.8
 ARG HUMID_VERSION=v1.0.5
 ARG CALIB_VERSION=v0.3.4
 ARG UMI_NEA_VERSION=v1.0.2
+ARG PARDRE_VERSION=v2.3.5-2
 
 RUN apt-get -y update && \
     apt-get -y install apt-utils sudo wget curl git vim bc less \
     gcc g++ cmake \
     libtool build-essential clang \
     zlib1g-dev libbz2-dev \
-    libboost-all-dev libboost-iostreams-dev
+    libboost-all-dev libboost-iostreams-dev \
+    libopenmpi-dev
 
 RUN apt-get -y install samtools
 RUN apt-get -y install bwa
@@ -34,6 +36,10 @@ RUN cd calib && make
 
 RUN wget https://github.com/jfjlaros/HUMID/releases/download/$HUMID_VERSION/humid -O /usr/local/bin/humid
 RUN chmod +x /usr/local/bin/humid
+
+WORKDIR /Download/
+RUN git clone -b $PARDRE_VERSION https://github.com/Redmar-van-den-Berg/ParDRe.git ParDRe
+RUN cd ParDRe && make && mv ParDRe /usr/local/bin/
 
 WORKDIR /home/
 CMD ["/bin/bash"]
