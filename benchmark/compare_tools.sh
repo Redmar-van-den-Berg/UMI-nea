@@ -298,6 +298,8 @@ run_pardre() {
     # Run ParDRe, writing the labels to stdout
     echo "$name r=$rep t=$td pardre" >> pardre.time
     { time timeout ${time_lim} bash -c "ParDRe -i ${fastq} -m ${dist} -l ${prefix_size} > ${labels} 2> ${log}"; } 2>> pardre.time
+
+    echo "Edit distance: ${dist}" >> ${log}
   fi
 
   # Determine the clusters
@@ -336,6 +338,9 @@ run_fastq-dupaway() {
     # Run fastq dupaway
     echo "$name r=$rep t=$td fastq-dupaway" >> fastq-dupaway.time
     { time timeout ${time_lim} bash -c "fastq-dupaway -i ${fastq} -o ${output} --compare-seq tail-hamming --distance ${dist} --write-clusters 2> ${log}"; } 2>> fastq-dupaway.time
+
+    echo "Edit distance: ${dist}" >> ${log}
+
     # Convert the cluster output from fastq-dupaway to labels
     python3 ../benchmark/dupaway_clusters_to_labels.py ${fastq} ${cluster_file} > ${labels}
   fi
