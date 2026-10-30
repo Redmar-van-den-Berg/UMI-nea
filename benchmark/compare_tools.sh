@@ -266,9 +266,42 @@ run_humid-max() {
     python3 ../benchmark/rewrite_truth.py ${truth} ${umi_len} > ${rw_truth}
   fi
 
-
   # Determine the clusters
   get_clustering_score ${labels} ${rw_truth} humid-max.sim${rep}.t$td.score
+}
+
+run_pardre() {
+  rep=$1
+  td=$2
+  mkdir -p pardre
+
+  labels=pardre/sim${rep}.t$td.labels
+  truth=sim${rep}.truth.labels
+  fastq=pardre/sim${rep}.fastq
+  log=log/pardre.sim${rep}.t$td.log
+
+  prefix_size=0
+
+  if [ ! -f $labels ]; then
+    # Write fastq file with quality scores
+    if [ ! -f $fastq ]; then
+      python3 ../benchmark/sim_to_fastq_with_qual.py sim${rep}.out ${rep} > ${fastq}
+    fi
+
+    # Determine the edit distance
+    if [ -f log/UMI-nea.sim${rep}.*.log ]; then
+      dist=`cat log/UMI-nea.sim${rep}.*.log | grep "maxdist" | head -1 | awk '{print $NF}'`
+    else
+      dist=1
+    fi
+
+    # Run ParDRe, writing the labels to stdout
+    echo "$name r=$rep t=$td pardre" >> pardre.time
+    { time timeout ${time_lim} bash -c "ParDRe -i ${fastq} -m ${dist} -l ${prefix_size} > ${labels} 2> ${log}"; } 2>> pardre.time
+  fi
+
+  # Determine the clusters
+  get_clustering_score ${labels} ${truth} pardre.sim${rep}.t$td.score
 }
 if [ ! -f performance.txt ]; then
     echo "num_founder mean_children_num variance_children_num umi_len err_rate insertion-deletion-substitution replicate total_umi simulated_mean_children_num simulated_variance_children_num substitution_base indel_base simulated_insertion-deletion-substitution substitution_only_umi indel_umi uniq_umi tool clustering_threshold thread runtime_in_sec dedup_umi_cluster V-measure homogeneity_score completeness_score RPU_cutoff RPU_cutoff_model estimated_molecule" > performance.txt
@@ -295,7 +328,7 @@ for rep in `seq 1 $num_rep`; do
 : <<'END'
 END
     for eval_t in `echo $tools_to_run | sed 's/,/\n/g'`; do
-        if [ $eval_t == "umi-tools" ] || [ $eval_t == "humid" ] || [ $eval_t == "humid-max" ]; then
+        if [ $eval_t == "umi-tools" ] || [ $eval_t == "humid" ] || [ $eval_t == "humid-max" ] || [ $eval_t == "pardre" ]; then
             td=1
         else
             td=$thread
@@ -337,6 +370,10 @@ END
             maxdist=`cat log/$eval_t.sim${rep}.t$td.log | grep "Edit distance" | awk '{print $3}'`
             ;;
         humid-max)
+            runtime_t=`cat $eval_t.time | grep -A 2 "$name r=$rep t=$td" | tail -1 | awk '{split($NF,a,"m");n+=a[1]*60;split(a[2],b,"s");n+=b[1];printf "%.2f\n",n}'`
+            maxdist=`cat log/$eval_t.sim${rep}.t$td.log | grep "Edit distance" | awk '{print $3}'`
+            ;;
+        pardre)
             runtime_t=`cat $eval_t.time | grep -A 2 "$name r=$rep t=$td" | tail -1 | awk '{split($NF,a,"m");n+=a[1]*60;split(a[2],b,"s");n+=b[1];printf "%.2f\n",n}'`
             maxdist=`cat log/$eval_t.sim${rep}.t$td.log | grep "Edit distance" | awk '{print $3}'`
             ;;
